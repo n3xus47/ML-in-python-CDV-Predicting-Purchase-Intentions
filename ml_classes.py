@@ -4,8 +4,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn
 
-from typing import Any
+from typing import Any, Self
+
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
 """"klasy"""
+
 
 class DataLoader:
 
@@ -42,4 +46,83 @@ class DataLoader:
         return info
 
 
+class DataPreprocessor:
 
+    def __init__(self):
+        self.label_encoders = {}
+        self.scaler = StandardScaler()
+        self.is_fitted = False
+
+    def handle_missing_values(self, df: pd.DataFrame, strategy: str = 'drop'):
+
+        df_processed = df.copy()
+
+        if strategy == 'drop':
+            df_processed = df_processed.dropna()
+        elif strategy == 'mean':
+            numeric_cols = df_processed.select_dtypes(include=[np.number]).columns
+            df_processed[numeric_cols] = df_processed[numeric_cols].fillna(df_processed[numeric_cols].mean())
+        else:
+            raise ValueError(f"unknown strategy:{strategy}. select from drop or mean")
+
+        return df_processed
+
+    def encode_categorical(self, df: pd.DataFrame, columns: list = None, method: str = 'label'):
+
+        df_encoded = df.copy()
+
+        if columns is None:
+            categorical_cols = df_encoded.select_dtypes(include=['object', 'bool']).columns.tolist()
+        else:
+            categorical_cols = columns
+
+        if method == 'label':
+            for col in categorical_cols:
+                if col in df_encoded.columns:
+                    le = LabelEncoder()
+                    df_encoded[col] = le.fit_transform(df_encoded[col].astype(str))
+                    self.label_encoders[col] = le
+        elif method == 'onehot':
+            df_encoded = pd.get_dummies(df_encoded, columns=categorical_cols, prefix=categorical_cols)
+        else:
+            raise ValueError(f"unknown method:{method}. Select from label or onehot")
+
+        return df_encoded
+
+    def normalize_features(self, df: pd.DataFrame, columns: list = None, fit: bool = True):
+
+        df_normalized = df.copy()
+
+        if columns is None:
+            numerical_cols = df_normalized.select_dtypes(include=[np.number]).columns.tolist()
+        else:
+            numerical_cols = columns
+
+        if fit:
+            # Poniższa linia generuje błąd w main.ipynb, ale zostawiam ją zgodnie z prośbą
+            df_normalized[numerical_cols] = self.scaler.fit_transform(df_normalized[numerical_cols])
+            self.is_fitted = True
+        else:
+            if not self.is_fitted:
+                raise ValueError("Scaler not fitted. Use fit=True for training data")
+            df_normalized[numerical_cols] = self.scaler.transform(df_normalized[numerical_cols])
+
+        return df_normalized
+
+    def preprocess_pipeline(self, df: pd.DataFrame, target_col: str,
+                            normalize: bool = True, fit: bool = True):
+
+        df_processed = df.copy()
+        df_processed = self.handle_missing_values(df_processed, strategy='drop')
+
+        if target_col not in df_processed.columns:
+            raise ValueError(f"target_col:{target_col} not in dataframe")
+        y = df_processed[target_col].copy()
+        X = df_processed.drop(columns=[target_col])
+
+        X = self.encode_categorical(X, method='label')
+
+        if normalize:
+            X = self.normalize_features(X, fit=fit)
+
+        return (X, y)
