@@ -4,9 +4,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn
 
-from typing import Any, Self
+from typing import Any
+from collections import Counter
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+
+def check_and_handle_imbalance(y_train, threshold=0.8):
+    class_counts = Counter[Any](y_train)
+    if len(class_counts) != 2:
+        return {}
+
+    counts = list[int](class_counts.values())
+    imbalance_ratio = min(counts) / max(counts)
+
+    if imbalance_ratio < threshold:
+        return {'class_weight': 'balanced'}
+    return {}
+
 
 """"klasy"""
 
@@ -126,3 +141,11 @@ class DataPreprocessor:
             X = self.normalize_features(X, fit=fit)
 
         return (X, y)
+
+class DataAnalyzer:
+    def __init__(self):
+        pass
+
+    def descriptive_statistics(self, df: pd.DataFrame):
+
+        return df.describe()
