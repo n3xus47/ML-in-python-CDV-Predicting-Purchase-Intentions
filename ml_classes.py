@@ -7,7 +7,11 @@ import sklearn
 from typing import Any
 from collections import Counter
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+#Usunąć? :
+
 
 
 def check_and_handle_imbalance(y_train, threshold=0.8):
@@ -251,6 +255,68 @@ class DataAnalyzer:
 
         plt.tight_layout()
         plt.show()
+
+
+class FeatureEngineer:
+
+    def __init__(self):
+        self.feature_importance = None
+
+    def create_interaction_features(self,df: pd.DataFrame):
+
+        df_new = df.copy()
+
+        if all(col in df_new.columns for col in ['Administrative', 'Informational' , 'ProductRelated']):
+            df_new['TotalPages'] = (df_new['Administrative'] +
+                                    df_new['Informational'] +
+                                    df_new['ProductRelated'])
+
+        if all(col in df_new.columns for col in ['Administrative_Duration',
+                                                 'Informational_Duration',
+                                                 'ProductRelated_Duration']):
+            df_new['TotalDuration'] = (df_new['Administrative_Duration'] +
+                                       df_new['Informational_Duration'] +
+                                       df_new['ProductRelated_Duration'])
+
+        if 'TotalDuration' in df_new.columns and 'TotalPages' in df_new.columns:
+            # 1e-6 zeby uniknac dzielenia przez zero
+            df_new['AvgPageDuration'] = df_new['TotalDuration'] / (df_new['TotalPages'] +1e-6)
+
+        if all(col in df_new.columns for col in ['BounceRates','ExitRates']):
+            df_new['BounceExitRatio'] = df_new['BounceRates'] / (df_new['ExitRates'] + 1e-6)
+
+        if 'ProductRelated' in df_new.columns and 'TotalPages' in df_new.columns:
+            df_new['ProductRelatedRatio'] = df_new['ProductRelated'] / (df_new['TotalPages'] + 1e-6)
+
+        return df_new
+
+    def selected_features(self,X: pd.DataFrame, y: pd.Series,
+                          method:str = 'importance', threshold: float = 0.01) ->tuple:
+
+        if method == 'correlation':
+            #wybieramy cechy z korelacja powyzej progu
+            correlations = X.corrwith(y).abs()
+            selected_features = correlations[correlations >= threshold].index.tolist()
+            X_selected = X[selected_features]
+
+        elif method == 'importance':
+            # rf uczy sie na wszystkich cechach i zwraca ich waznosc
+            rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+            rf.fit(X, y)
+
+            feature_importance = pd.Series(rf.feature_importances_, index=X.columns)
+            self.feature_importance = feature_importance.sort_values(ascending=False)
+
+            selected_features = feature_importance[feature_importance >= threshold].index.tolist()
+            X_selected = X[selected_features]
+
+        else:
+            X_selected = X
+            selected_features = X.columns.tolist()
+
+        return X_selected, selected_features
+
+
 
 
 
