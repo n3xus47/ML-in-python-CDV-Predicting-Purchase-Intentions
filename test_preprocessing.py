@@ -11,7 +11,7 @@ def preprocessor():
 
 @pytest.fixture
 def raw_data():
-    """Dane z brakami i kolumnami kategorycznymi."""
+    """Dane z brakami i kategoriami."""
     return pd.DataFrame({
         'num': [1.0, np.nan, 3.0],
         'cat': ['A', 'B', 'A'],
