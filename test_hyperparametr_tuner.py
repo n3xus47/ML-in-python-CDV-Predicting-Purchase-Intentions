@@ -8,7 +8,7 @@ from ml_classes import HyperparameterTuner
 # Definicja brakującej fixtury
 @pytest.fixture
 def dummy_split():
-    """Generuje syntetyczne dane do testów modeli."""
+    """Generuje dane do testów modeli."""
     X, y = make_classification(n_samples=50, n_features=5, random_state=42)
     X = pd.DataFrame(X, columns=[f'feat_{i}' for i in range(5)])
     y = pd.Series(y)
