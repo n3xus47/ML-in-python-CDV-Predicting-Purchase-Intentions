@@ -7,7 +7,7 @@ from ml_classes import ModelTrainer
 # Fixtura generująca dane - musi być tutaj, skoro nie używamy conftest.py
 @pytest.fixture
 def dummy_split():
-    """Generuje syntetyczne dane do testów (100 próbek, 5 cech)."""
+    """Generuje dane do testów (100 próbek, 5 cech)."""
     X, y = make_classification(n_samples=100, n_features=5, random_state=42)
     X = pd.DataFrame(X, columns=[f'f{i}' for i in range(5)])
     return X, y
@@ -32,7 +32,7 @@ def test_training_and_evaluation(dummy_split):
 
 
 def test_compare_models(dummy_split):
-    """Testuje funkcję porównywania wielu modeli."""
+    """Testuje funkcję do porównywania wielu modeli."""
     X, y = dummy_split
     trainer = ModelTrainer()
 
