@@ -41,10 +41,6 @@ class DataLoader:
         self.path = None
     
     def load_data(self, path: str) -> pd.DataFrame:
-        """
-        Wczytuje dane z pliku CSV.
-
-        """
         try:
             self.data = pd.read_csv(path)
             self.path = path
@@ -429,7 +425,7 @@ class ModelTrainer:
         """
         y_pred = model.predict(X_test)
         
-        # pipeline ma predict_proba przez nested model, trzeba to sprawdzic
+        # bierzemy prawdopodobienstwo do ROC AUC
         if hasattr(model, 'predict_proba'):
             y_pred_proba = model.predict_proba(X_test)[:, 1]
         elif hasattr(model, 'named_steps') and hasattr(model.named_steps['model'], 'predict_proba'):
